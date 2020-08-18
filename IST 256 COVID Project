@@ -1,1 +1,192 @@
+import requests
+import json
+import tweepy
+import pandas as pd
+from IPython.display import display
+import chart_studio as plotly
+import chart_studio.plotly as py
+import plotly.express as px
+import pandas as pd
+import warnings
+warnings.filterwarnings('ignore')
+try:
+    #Plotly API Keys
+    plotly.tools.set_credentials_file(username='dylanamcd', api_key='6aaShws3LzdrSsfR1FVx')
 
+    #State Covid Health Data Function
+    def state_health_data(state):
+        url = f"https://covidtracking.com/api/v1/states/{state}/daily.json"
+        response = requests.get(url)
+        state_covid_data = response.json()
+        return state_covid_data
+
+    #Sentiment Score Function
+    def sentiment_score(text): #score of 1 is perfectly positive, score of -1 is perfectly negative
+        key = "c9f2e73023e04a9c9aa735632a5d37f5"
+        endpoint = " https://ist256-text-analytics-45.cognitiveservices.azure.com/"
+        url = f'{endpoint}text/analytics/v3.0-preview.1/sentiment'
+        header = { 'Ocp-Apim-Subscription-Key' : key}
+        documents = {"documents": [{"id": "1", "text": text }]}
+        response = requests.post(url,headers=header, json=documents)
+        sentiments = response.json()
+        for sentiment in sentiments['documents']:
+            positive_score = sentiment['documentScores']['positive']
+            negative_score = sentiment['documentScores']['negative']
+            s_score = positive_score-negative_score
+        if s_score > 0:
+            return(positive_score)
+        if s_score < 0:
+            return(0-negative_score)
+        else:
+            return(0)
+
+    #Average Sentiment Function
+    def average_sentiment(tweet_frame):
+        total_score = 0
+        count = 0
+        for score in tweet_frame['Sentiment_Score']:
+            total_score += score
+            count += 1
+        average_score = total_score / count
+        return average_score
+
+    #Get Last 20 Tweets Function
+    def get_tweets(username):
+        #Derived from function created by Ayush Govil on geeksforgeeks: https://www.geeksforgeeks.org/extraction-of-tweets-using-tweepy/
+        consumer_key = 's2QGyEjnJUwzqJmAE8FaUoVw3'
+        consumer_secret = 'pWFLqpwvb0299DSLymxnO4XyYZfBdICvwJZzkGHUI4E9oBwoaH'
+        oauth_token = '811351268971212800-2NvFAm07fvvlUSWsG2OpEI5UQsghGeR'
+        oauth_token_secret = '4OlaKpXVz8H2suZ7zqcUheF8MgEwvcvVaH88wzSIjfHkG'
+        import tweepy
+        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+        auth.set_access_token(oauth_token, oauth_token_secret)
+        api = tweepy.API(auth)
+        tweets = api.user_timeline(screen_name=username) 
+        tweet_list=[] 
+        tweets_data = [tweet.text for tweet in tweets]
+        for text in tweets_data: 
+            tweet_list.append(text) 
+        return(tweet_list) 
+
+    #Main Program
+    print("1. Historical COVID-19 Health Data for entire United States")
+    print("2. Historical COVID-19 Health Data by U.S. state")
+    print("3. Twitter PR Data for Public Figures")
+
+    main_menu = input("Enter the option number for the data you would like to explore: ")
+
+    #Daily U.S. COVID-19 Health DataFrame
+    if main_menu == '1':
+        print("1. Total Positive Cases")
+        print("2. Total Deaths")
+        print("3. Currently Hospitalized")
+        print("4. Number of COVID-19 patients currently on ventilators")
+        print("5. New Positive COVID-19 Cases Per Day")
+        menu1A = input("Enter the option number for the statistic you would like to view: ")
+        if menu1A == '1':
+            url = f"https://covidtracking.com/api/v1/us/daily.json"
+            response = requests.get(url)
+            us_covid_data = response.json()
+            us_covid_datadf = pd.DataFrame(us_covid_data)
+            display(px.line(us_covid_datadf, x='date', y='positive', title='Total United States Postive COVID-19 Cases'))
+        elif menu1A == '2':
+            url = f"https://covidtracking.com/api/v1/us/daily.json"
+            response = requests.get(url)
+            us_covid_data = response.json()
+            us_covid_datadf = pd.DataFrame(us_covid_data)
+            display(px.line(us_covid_datadf, x='date', y='death', title='Total COVID-19 Deaths in United States'))
+        elif menu1A == '3':
+            url = f"https://covidtracking.com/api/v1/us/daily.json"
+            response = requests.get(url)
+            us_covid_data = response.json()
+            us_covid_datadf = pd.DataFrame(us_covid_data)
+            display(px.line(us_covid_datadf, x='date', y='hospitalizedCurrently', title='Currently Hospitalized with COVID-19 in United States'))
+        elif menu1A == '4':
+            url = f"https://covidtracking.com/api/v1/us/daily.json"
+            response = requests.get(url)
+            us_covid_data = response.json()
+            us_covid_datadf = pd.DataFrame(us_covid_data)
+            display(px.line(us_covid_datadf, x='date', y='onVentilatorCurrently', title= 'COVID-19 Patients Currently on Ventilators'))
+        elif menu1A == '5':
+            url = f"https://covidtracking.com/api/v1/us/daily.json"
+            response = requests.get(url)
+            us_covid_data = response.json()
+            us_covid_datadf = pd.DataFrame(us_covid_data)
+            display(px.line(us_covid_datadf, x='date', y='positiveIncrease', title= 'Increase in New Cases of COVID-19 Per Day'))
+        else:
+            print("Please enter your option as a number from 1-5.")
+            
+
+    #State COVID-19 Health DataFrame
+    elif main_menu == '2':
+        print("1. Total Positive Cases")
+        print("2. Total Deaths")
+        print("3. Currently Hospitalized")
+        print("4. New Positive COVID-19 Cases Per Day")
+        menu2A = input("Enter the option number for the statistic you would like to view: ")
+        while True:
+            st = input("Enter the official two letter abbreviation of the state you would like to view. Enter 'quit' when done.  ").lower()
+            if st == 'quit':
+                    break
+            elif menu2A == '1':
+                data = state_health_data(st)
+                statedf = pd.DataFrame(data)
+                display(px.line(statedf, x='date', y='positive', title=f'Total {st} Positive COVID-19 Cases'))
+            elif menu2A == '2': 
+                data = state_health_data(st)
+                statedf = pd.DataFrame(data)
+                display(px.line(statedf, x='date', y='death', title=f'Total COVID-19 Deaths in {st}'))
+            elif menu2A == '3':
+                data = state_health_data(st)
+                statedf = pd.DataFrame(data)
+                display(px.line(statedf, x='date', y='hospitalizedCurrently', title=f'Currently Hospitalized with COVID-19 in {st}'))
+            elif menu2A == '4':
+                data = state_health_data(st)
+                statedf = pd.DataFrame(data)
+                display(px.line(statedf, x='date', y='positiveIncrease', title= f'Increase in New Cases of COVID-19 Per Day for {st}'))
+            else:
+                print("Please enter your option as a number from 1-4.")
+
+    elif main_menu == '3':
+        #Governor Twitter Accounts Sentiment Score DataFrame
+        while True:
+            try:
+                governor = input("Enter the official Twitter handle of any Public Leader. Type 'quit' when finished: ")
+                if governor == 'quit':
+                    break
+                else:
+                    tweet_data = get_tweets(governor)
+                    tweet_series = pd.Series(data = tweet_data)
+                    governor_name = pd.Series(data = [governor, governor, governor, governor, governor, governor, governor, governor, governor, governor, governor, governor, governor, governor, governor, governor, governor, governor, governor, governor])
+                    tweet_index = pd.Series(data = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
+                    series_dict = {'Tweets' : tweet_series, 'Governor' : governor_name, "TweetIndex" : tweet_index}
+                    tweet_frame = pd.DataFrame( series_dict )
+                    row_list = []
+                    for row in tweet_frame['Tweets']:
+                        sent = (sentiment_score(row))
+                        row_list.append(sent)
+                    sentiment_dict = {'Sentiment_Score' : row_list}
+                    sentiment_frame = pd.DataFrame(sentiment_dict)
+                    tweet_frame['Sentiment_Score'] = sentiment_frame['Sentiment_Score']
+                    rtweet_frame = tweet_frame.iloc[::-1]
+                    print("Perfectly Postive: 1   Neutral: 0   Perfectly Negative: -1")
+                    display(px.line(rtweet_frame, x= 'TweetIndex', y='Sentiment_Score', title= f"Sentiments for Last 20 Tweets by {governor}"))
+                    print("Average sentiment score: %.2f" % (average_sentiment(tweet_frame)))
+            except:
+                print("Please enter a valid Twitter Handle")
+    else:
+        print("Please enter your option as a number from 1-3.")
+        
+#Error handling        
+except json.decoder.JSONDecodeError as e: 
+    print("ERROR: Cannot decode the response into json")
+    print("DETAILS", e)
+
+except requests.exceptions.HTTPError as e:
+    print("ERROR: Response from ", url, 'was not ok.')
+    print("DETAILS:", e)
+        
+except requests.exceptions.RequestException as e: 
+    print("ERROR: Cannot connect to ", url)
+    print("DETAILS:", e)
+    
