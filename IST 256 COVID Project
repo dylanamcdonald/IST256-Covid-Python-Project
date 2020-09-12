@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings('ignore')
 try:
     #Plotly API Keys
-    plotly.tools.set_credentials_file(username='dylanamcd', api_key='6aaShws3LzdrSsfR1FVx')
+    plotly.tools.set_credentials_file(username='dylanamcd', api_key='####################')
 
     #State Covid Health Data Function
     def state_health_data(state):
@@ -22,7 +22,7 @@ try:
 
     #Sentiment Score Function
     def sentiment_score(text): #score of 1 is perfectly positive, score of -1 is perfectly negative
-        key = "c9f2e73023e04a9c9aa735632a5d37f5"
+        key = "################"
         endpoint = " https://ist256-text-analytics-45.cognitiveservices.azure.com/"
         url = f'{endpoint}text/analytics/v3.0-preview.1/sentiment'
         header = { 'Ocp-Apim-Subscription-Key' : key}
@@ -53,10 +53,10 @@ try:
     #Get Last 20 Tweets Function
     def get_tweets(username):
         #Derived from function created by Ayush Govil on geeksforgeeks: https://www.geeksforgeeks.org/extraction-of-tweets-using-tweepy/
-        consumer_key = 's2QGyEjnJUwzqJmAE8FaUoVw3'
-        consumer_secret = 'pWFLqpwvb0299DSLymxnO4XyYZfBdICvwJZzkGHUI4E9oBwoaH'
-        oauth_token = '811351268971212800-2NvFAm07fvvlUSWsG2OpEI5UQsghGeR'
-        oauth_token_secret = '4OlaKpXVz8H2suZ7zqcUheF8MgEwvcvVaH88wzSIjfHkG'
+        consumer_key = '#######################'
+        consumer_secret = '#######################'
+        oauth_token = '##########################'
+        oauth_token_secret = ####################
         import tweepy
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         auth.set_access_token(oauth_token, oauth_token_secret)
